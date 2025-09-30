@@ -34,3 +34,7 @@ export function createElement<K extends keyof HTMLElementTagNameMap>(
 
     return element;
 }
+
+export function render(parent: HTMLElement, child: Child) {
+    appendChild(parent, child)
+}
