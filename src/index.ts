@@ -1,3 +1,10 @@
-import { createElement } from './react-dom'
+import { render } from './react-dom';
+import App from './app';
 
-const divEl = createElement('h1', { title: 'harsh', className: 'main' }, children: 'Hello World')
+const rootElement = document.getElementById('root');
+
+if (rootElement) {
+    render(rootElement, App);
+} else {
+    console.error('Root element not found');
+}
