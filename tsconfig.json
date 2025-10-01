@@ -6,10 +6,6 @@
             "esnext",
             "dom"
         ],
-        "target": "ESNext",
-        "module": "Preserve",
-        "moduleDetection": "force",
-        "jsx": "react-jsx",
         "allowJs": true,
         // Bundler mode
         "moduleResolution": "bundler",
@@ -17,14 +13,20 @@
         "verbatimModuleSyntax": true,
         "noEmit": true,
         // Best practices
-        "strict": true,
-        "skipLibCheck": true,
         "noFallthroughCasesInSwitch": true,
         "noUncheckedIndexedAccess": true,
         "noImplicitOverride": true,
         // Some stricter flags (disabled by default)
         "noUnusedLocals": false,
         "noUnusedParameters": false,
-        "noPropertyAccessFromIndexSignature": false
+        "noPropertyAccessFromIndexSignature": false,
+        "target": "esnext",
+        "module": "esnext",
+        "jsx": "react", // not "react-jsx" because this transforms the that is the modern, automatic JSX transform. Instead of rewriting <div /> to React.createElement('div'), it transforms it into _jsx('div') and automatically injects an import from a "JSX runtime" (e.g., import { jsx as _jsx } from 'react/jsx-runtime')
+        "jsxFactory": "createElement", // This setting works in conjunction with "jsx": "react". It explicitly tells TypeScript that the function to call for JSX elements is named createElement. This is the crucial link that connects your JSX syntax to your custom function.
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
     }
 }
