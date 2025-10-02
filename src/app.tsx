@@ -1,4 +1,4 @@
-import { createElement } from "../reactless/vdom";
+import { createElement } from "../reactless";
 
 const App = () => {
     return (
