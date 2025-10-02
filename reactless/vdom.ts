@@ -22,16 +22,19 @@ export function createElement<K extends keyof HTMLElementTagNameMap>(
 ): HTMLElementTagNameMap[K] {
     const element = document.createElement(type);
 
-    if (props.id) element.id = props.id;
-    if (props.title) element.title = props.title;
-    if (props.className) element.className = props.className;
+    if (props?.id) element.id = props.id;
+    if (props?.title) element.title = props.title;
+    if (props?.className) element.className = props.className;
 
-    for (const child of children.flat()) {
-        if (typeof child === 'string' || child instanceof HTMLElement) {
-            appendChild(element, child);
+    if (children) {
+        for (const child of children.flat()) {
+            if (typeof child === 'string' || child instanceof HTMLElement) {
+                appendChild(element, child);
+            }
         }
-    }
 
+
+    }
     return element;
 }
 
