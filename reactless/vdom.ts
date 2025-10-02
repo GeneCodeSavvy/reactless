@@ -32,9 +32,8 @@ export function createElement<K extends keyof HTMLElementTagNameMap>(
                 appendChild(element, child);
             }
         }
-
-
     }
+
     return element;
 }
 
