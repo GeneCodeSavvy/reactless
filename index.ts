@@ -3,10 +3,8 @@ import App from './src/app';
 
 const rootElement = document.getElementById('root');
 
-const app = App()
-
 if (rootElement) {
-    render(rootElement, app);
+    render(rootElement, App());
 } else {
     console.error('Root element not found');
 }
