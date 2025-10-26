@@ -1,18 +1,23 @@
 type TextChild = string | number;
 type ReactlessChild = ReactlessElement | TextChild;
 
-type PropsObject = Partial<{
-    title: string,
-    id: string,
-    className: string,
-}> & {
-    children?: ReactlessChild[]
+interface BaseProps {
+    children?: ReactlessChild[];
 }
 
-type ReactlessElement = {
-    type: string;
-    props: PropsObject;
+interface ElementAttributes {
+    title: string;
+    id: string;
+    className: string;
 }
+
+interface TextElementProps extends BaseProps {
+    nodeValue: string;
+}
+
+type ElementProps = Partial<ElementAttributes> & BaseProps;
+
+type PropsObject = ElementProps | TextElementProps;
 
 type FiberNode = {
     type: string | undefined;
@@ -20,6 +25,11 @@ type FiberNode = {
     parent: FiberNode | null;
     child: FiberNode | null;
     sibling: FiberNode | null;
+    props: PropsObject;
+}
+
+type ReactlessElement = {
+    type: string;
     props: PropsObject;
 }
 
@@ -31,7 +41,7 @@ function createTextElement(text: TextChild): ReactlessElement {
         props: {
             nodeValue: String(text),
             children: []
-        } as PropsObject
+        } as TextElementProps
     } as ReactlessElement;
 }
 
@@ -54,14 +64,17 @@ export function createElement(
 }
 
 function createDom(fiber: FiberNode): Node {
-    const dom = fiber.type === TEXT_ELEMENT
-        ? document.createTextNode((fiber.props as any)?.nodeValue ?? '')
-        : document.createElement(fiber.type || 'div');
+    if (fiber.type === TEXT_ELEMENT) {
+        const props = fiber.props as TextElementProps;
+        return document.createTextNode(props.nodeValue);
+    }
 
-    const { id, title, className } = fiber.props as any;
-    if (id) (dom as any).id = id;
-    if (title) (dom as any).title = title;
-    if (className) (dom as any).className = className;
+    const dom = document.createElement(fiber.type || 'div');
+    const props = fiber.props as ElementProps;
+
+    if (props.id) dom.id = props.id;
+    if (props.title) dom.title = props.title;
+    if (props.className) dom.className = props.className;
 
     return dom;
 }
