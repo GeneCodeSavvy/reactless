@@ -3,6 +3,7 @@ import * as constants from "./constants"
 let nextUnitOfWork: FiberNode | null = null;
 let wipRoot: FiberNode | null = null;
 let currentRoot: FiberNode | null = null;
+let nextEffect: FiberNode | null = null;
 
 function createDom(fiber: FiberNode): Node {
     if (fiber.type === constants.TEXT_ELEMENT) {
@@ -22,22 +23,41 @@ function createDom(fiber: FiberNode): Node {
 
 function commitRoot() {
     if (!wipRoot) return;
-    commitWork(wipRoot.child);
-    currentRoot = wipRoot;
-    wipRoot = null;
+    nextEffect = wipRoot.child;
+    requestIdleCallback(commitLoop);
 }
 
-function commitWork(fiber: FiberNode | null) {
-    if (!fiber) return;
+function commitLoop(deadline: IdleDeadline) {
+    if (nextEffect && deadline.timeRemaining() > 1) {
+        nextEffect = commitUnitOfWork(nextEffect);
+    }
+
+    if (nextEffect) {
+        requestIdleCallback(commitLoop);
+    } else {
+        currentRoot = wipRoot;
+        wipRoot = null;
+    }
+}
+
+function commitUnitOfWork(fiber: FiberNode): FiberNode | null {
 
     let parentFiber = fiber.parent;
-    const parentDom = parentFiber?.dom as Node | undefined;
+    
+    const parentDom = parentFiber?.dom;
     if (fiber.dom && parentDom) {
         parentDom.appendChild(fiber.dom);
     }
 
-    commitWork(fiber.child);
-    commitWork(fiber.sibling);
+    if (fiber.child) return fiber.child;
+
+    let nextFiber: FiberNode | null = fiber;
+    while (nextFiber) {
+        if (nextFiber.sibling) return nextFiber.sibling;
+        nextFiber = nextFiber.parent;
+    }
+
+    return null;
 }
 
 function performUnitOfWork(fiber: FiberNode): FiberNode | null {
@@ -80,12 +100,12 @@ function performUnitOfWork(fiber: FiberNode): FiberNode | null {
 }
 
 function workLoop(deadline: IdleDeadline) {
-    if (!nextUnitOfWork && wipRoot) {
-        commitRoot();
-    }
-
     while (nextUnitOfWork && deadline.timeRemaining() > 1) {
         nextUnitOfWork = performUnitOfWork(nextUnitOfWork);
+    }
+
+    if (!nextUnitOfWork && wipRoot) {
+        commitRoot();
     }
 
     requestIdleCallback(workLoop);
