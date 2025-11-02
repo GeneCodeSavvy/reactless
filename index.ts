@@ -1,4 +1,4 @@
-import { render } from './reactless/vdom';
+import { render } from './reactless';
 import App from './src/app';
 
 const rootElement = document.getElementById('root');
