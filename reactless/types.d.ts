@@ -25,7 +25,6 @@ type TextChild = string | number;
 
 type ReactlessChild = ReactlessElement | TextChild;
 
-
 type FiberNode = {
     type: string | undefined;
     dom: Node | null;
@@ -33,4 +32,6 @@ type FiberNode = {
     child: FiberNode | null;
     sibling: FiberNode | null;
     props: PropsObject;
+    effectTag: "UPDATE" | "PLACEMENT" | "DELETION" | "";
+    alternate: FiberNode | null;
 }

@@ -1,8 +1,9 @@
 import * as constants from "./constants"
-import { commitRoot, setWipRoot } from "./commit-phase"
+import { commitRoot, setWipRoot, getCurrentRoot, setDeletions } from "./commit-phase"
 
 export let nextUnitOfWork: FiberNode | null = null;
 export let wipRoot: FiberNode | null = null;
+export let deletions: FiberNode[] = [];
 
 function createDom(fiber: FiberNode): Node {
     if (fiber.type === constants.TEXT_ELEMENT) {
@@ -20,6 +21,65 @@ function createDom(fiber: FiberNode): Node {
     return dom;
 }
 
+function reconcileChildren(wipFiber: FiberNode, elements: ReactlessElement[]) {
+    let index = 0;
+    let oldFiber = wipFiber.alternate && wipFiber.alternate.child;
+    let prevSibling: FiberNode | null = null;
+
+    while (index < elements.length || oldFiber != null) {
+        const element = elements[index];
+        let newFiber: FiberNode | null = null;
+
+        const sameType = oldFiber && element && element.type === oldFiber.type;
+
+        if (sameType && oldFiber) {
+            newFiber = {
+                type: oldFiber.type,
+                dom: oldFiber.dom,
+                parent: wipFiber,
+                child: null,
+                sibling: null,
+                props: element.props,
+                alternate: oldFiber,
+                effectTag: "UPDATE",
+            };
+        }
+
+        if (element && !sameType) {
+            newFiber = {
+                type: element.type,
+                dom: null,
+                parent: wipFiber,
+                child: null,
+                sibling: null,
+                props: element.props,
+                alternate: null,
+                effectTag: "PLACEMENT",
+            };
+        }
+
+        if (oldFiber && !sameType) {
+            oldFiber.effectTag = "DELETION";
+            deletions.push(oldFiber);
+        }
+
+        if (oldFiber) {
+            oldFiber = oldFiber.sibling;
+        }
+
+        if (index === 0) {
+            wipFiber.child = newFiber;
+        } else if (prevSibling && newFiber) {
+            prevSibling.sibling = newFiber;
+        }
+
+        if (newFiber) {
+            prevSibling = newFiber;
+        }
+        index++;
+    }
+}
+
 function performUnitOfWork(fiber: FiberNode): FiberNode | null {
     if (fiber.type) {
         if (!fiber.dom) {
@@ -28,27 +88,7 @@ function performUnitOfWork(fiber: FiberNode): FiberNode | null {
     }
 
     const elements = (fiber.props.children || []) as ReactlessElement[];
-    let prevSibling: FiberNode | null = null;
-
-    for (let i = 0; i < elements.length; i++) {
-        const element = elements[i];
-        if (!element) continue;
-        const newFiber: FiberNode = {
-            type: element.type,
-            dom: null,
-            parent: fiber,
-            child: null,
-            sibling: null,
-            props: element.props,
-        };
-
-        if (i === 0) {
-            fiber.child = newFiber;
-        } else if (prevSibling) {
-            prevSibling.sibling = newFiber;
-        }
-        prevSibling = newFiber;
-    }
+    reconcileChildren(fiber, elements);
 
     if (fiber.child) return fiber.child;
     let nextFiber: FiberNode | null = fiber;
@@ -66,6 +106,7 @@ function workLoop(deadline: IdleDeadline) {
 
     if (!nextUnitOfWork && wipRoot) {
         setWipRoot(wipRoot);
+        setDeletions(deletions);
         commitRoot();
     }
 
@@ -81,8 +122,10 @@ export function render(container: HTMLElement, element: ReactlessElement) {
         sibling: null,
         props: {
             children: [element]
-        }
+        },
+        alternate: getCurrentRoot(),
     };
+    deletions = [];
     nextUnitOfWork = wipRoot;
 }
 

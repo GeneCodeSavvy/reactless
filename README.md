@@ -31,7 +31,7 @@ Modify it, break it, and rebuild it
 - [x] Concurrent Mode
 - [x] Fibers
 - [x] Render and Commit Phases
-- [ ] Reconciliation
+- [x] Reconciliation
 - [ ] Functional Components
 - [ ] Hooks
 
